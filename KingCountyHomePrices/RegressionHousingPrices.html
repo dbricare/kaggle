@@ -11691,7 +11691,7 @@ ul.typeahead-list > li > a {
     /* global */
 
 body {
-    font-family: Roboto, Lato, sans-serif;
+    font-family: Lato, Roboto, sans-serif;
     font-weight: 400;
     font-size: 1.4em;
 }
@@ -11765,16 +11765,17 @@ div#notebook {
 <p><a id="top"></a></p>
 <h1 id="King-County-Home-Prices">King County Home Prices<a class="anchor-link" href="#King-County-Home-Prices">&#182;</a></h1><hr>
 <h2 id="Project-description">Project description<a class="anchor-link" href="#Project-description">&#182;</a></h2><p><a href="https://www.google.com/maps/place/King+County,+WA/@47.4269284,-122.9180846,8z/data=!3m1!4b1!4m5!3m4!1s0x54905c8c832d7837:0xe280ab6b8b64e03e!8m2!3d47.5480339!4d-121.9836029">King County</a> is located in Washington and contains the Seattle metropolitan area. This project will explore the use of several regression methods in order to find the most accurate prediction of home prices in the area. Data downloaded from <a href="https://www.kaggle.com/harlfoxem/housesalesprediction">Kaggle</a>.</p>
-<p>Some limited information is available on the <a href="http://info.kingcounty.gov/assessor/esales/Glossary.aspx?type=r">county website</a>, otherwise my best judgement was used in interpreting the meaning of each feature in the dataset.</p>
+<p>Some limited information is available on the <a href="http://info.kingcounty.gov/assessor/esales/Glossary.aspx?type=r">county website</a>, otherwise best judgement was used in interpreting the meaning of each feature in the dataset.</p>
 <h2 id="Contents">Contents<a class="anchor-link" href="#Contents">&#182;</a></h2><ol>
 <li><a href="#eda">Exploratory data analysis</a></li>
 <li><a href="#simple">Simple model</a></li>
 <li><a href="#loc">Model including location</a></li>
 <li><a href="#timeseries">Time-series model</a></li>
+<li><a href="#comb">Combining estimators</a></li>
 <li><a href="#concl">Conclusion</a></li>
 </ol>
 <h2 id="Next-steps">Next steps<a class="anchor-link" href="#Next-steps">&#182;</a></h2><ul>
-<li>Gradient boosting trees perform well with $R^2 = 0.89$ on a scale of 0 (lowest) to 1 (highest). Might compare XGBoost performance against the scikit-learn gradient-boosting implementation.</li>
+<li>Gradient boosting trees perform well here however it might be worthwhile to compare <a href="https://xgboost.readthedocs.io/en/latest/">XGBoost</a> performance against the scikit-learn gradient-boosting implementation.</li>
 </ul>
 
 </div>
@@ -11782,7 +11783,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[170]:</div>
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># import libraries</span>
@@ -11809,6 +11810,7 @@ div#notebook {
 <span class="kn">from</span> <span class="nn">sklearn.ensemble</span> <span class="k">import</span> <span class="n">RandomForestRegressor</span><span class="p">,</span> <span class="n">GradientBoostingRegressor</span>
 <span class="kn">from</span> <span class="nn">sklearn.svm</span> <span class="k">import</span> <span class="n">SVR</span>
 <span class="kn">from</span> <span class="nn">sklearn.utils</span> <span class="k">import</span> <span class="n">shuffle</span>
+<span class="kn">from</span> <span class="nn">sklearn.pipeline</span> <span class="k">import</span> <span class="n">Pipeline</span>
 
 <span class="o">%</span><span class="k">matplotlib</span> inline
 </pre></div>
@@ -16602,7 +16604,7 @@ Name: price, dtype: float64</pre>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[152]:</div>
+<div class="prompt input_prompt">In&nbsp;[22]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># first convert date to proper date</span>
@@ -16619,7 +16621,7 @@ Name: price, dtype: float64</pre>
 <div class="output">
 
 
-<div class="output_area"><div class="prompt output_prompt">Out[152]:</div>
+<div class="output_area"><div class="prompt output_prompt">Out[22]:</div>
 
 <div class="output_html rendered_html output_subarea output_execute_result">
 <div>
@@ -16785,11 +16787,10 @@ Name: price, dtype: float64</pre>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[153]:</div>
+<div class="prompt input_prompt">In&nbsp;[23]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># function to generate proper time stamps based on desired granularity</span>
-
 
 
 <span class="c1"># find earliest time points and save for proper time window</span>
@@ -17364,10 +17365,402 @@ rkJggg==
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
+<p><a href="#top">Return to top</a></p>
+<p><a id="comb"></a></p>
+<hr>
+<h1 id="Combination-of-predictions">Combination of predictions<a class="anchor-link" href="#Combination-of-predictions">&#182;</a></h1><p>Although the gradient boosting model seems to generalize well (test error is close in magnitude to training error) it may be possible to improve performance by combining the output of several models.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># load dataset</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;modified01.csv.gz&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="s1">&#39;gzip&#39;</span><span class="p">)</span>
+<span class="n">df</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>&lt;class &#39;pandas.core.frame.DataFrame&#39;&gt;
+RangeIndex: 21613 entries, 0 to 21612
+Data columns (total 25 columns):
+id                  21613 non-null int64
+date                21613 non-null object
+price               21613 non-null float64
+bedrooms            21613 non-null int64
+bathrooms           21613 non-null float64
+sqft_living         21613 non-null int64
+sqft_lot            21613 non-null int64
+floors              21613 non-null float64
+waterfront          21613 non-null int64
+view                21613 non-null int64
+condition           21613 non-null int64
+grade               21613 non-null int64
+sqft_above          21613 non-null int64
+sqft_basement       21613 non-null int64
+yr_built            21613 non-null int64
+yr_renovated        21613 non-null int64
+zipcode             21613 non-null int64
+lat                 21613 non-null float64
+long                21613 non-null float64
+sqft_living15       21613 non-null int64
+sqft_lot15          21613 non-null int64
+livingdiff          21613 non-null int64
+lotdiff             21613 non-null int64
+is_renovated        21613 non-null int64
+yr_renovated_new    21613 non-null float64
+dtypes: float64(6), int64(18), object(1)
+memory usage: 4.1+ MB
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># divide dataset</span>
+
+<span class="n">y</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;price&#39;</span><span class="p">]</span>
+<span class="n">Xraw</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;price&#39;</span><span class="p">,</span> <span class="s1">&#39;livingdiff&#39;</span><span class="p">,</span> <span class="s1">&#39;lotdiff&#39;</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;date&#39;</span><span class="p">,</span> <span class="s1">&#39;zipcode&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">ss</span> <span class="o">=</span> <span class="n">StandardScaler</span><span class="p">()</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">ss</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">Xraw</span><span class="p">)</span>
+
+<span class="n">Xtrain</span><span class="p">,</span> <span class="n">Xtest</span><span class="p">,</span> <span class="n">ytrain</span><span class="p">,</span> <span class="n">ytest</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># run random forest regressor</span>
+
+<span class="n">rfparams</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;max_features&#39;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s1">&#39;max_depth&#39;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span> <span class="s1">&#39;n_estimators&#39;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">}</span>
+
+<span class="n">rf</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">rfparams</span><span class="p">)</span>
+<span class="n">rf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Xtrain</span><span class="p">,</span> <span class="n">ytrain</span><span class="p">)</span>
+
+<span class="c1"># run gradient boosting regressor</span>
+
+<span class="n">gbrparams</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;max_depth&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;learning_rate&#39;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="s1">&#39;n_estimators&#39;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">}</span>
+
+<span class="n">gbr</span> <span class="o">=</span> <span class="n">GradientBoostingRegressor</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="o">**</span><span class="n">gbrparams</span><span class="p">)</span>
+<span class="n">gbr</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Xtrain</span><span class="p">,</span> <span class="n">ytrain</span><span class="p">)</span>
+
+<span class="c1"># combine outputs and feed into linear regression</span>
+
+<span class="n">lr</span> <span class="o">=</span> <span class="n">LinearRegression</span><span class="p">(</span><span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">lr</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">rf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xtrain</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span><span class="n">gbr</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xtrain</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))),</span><span class="n">ytrain</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span><span class="n">est</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><span class="s1">&#39;Random Forest&#39;</span><span class="p">,</span> <span class="s1">&#39;Gradient Boosting&#39;</span><span class="p">,</span> <span class="s1">&#39;Linear Combination&#39;</span><span class="p">],[</span><span class="n">rf</span><span class="p">,</span><span class="n">gbr</span><span class="p">,</span><span class="n">lr</span><span class="p">]):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">est</span><span class="o">==</span><span class="n">lr</span><span class="p">:</span>
+        <span class="n">Xtest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">rf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xtest</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span><span class="n">gbr</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xtest</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)))</span>
+    <span class="n">ypred</span> <span class="o">=</span> <span class="n">est</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xtest</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;test set r^2 score = </span><span class="si">{0:.4f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">r2_score</span><span class="p">(</span><span class="n">ytest</span><span class="p">,</span> <span class="n">ypred</span><span class="p">)))</span>
+    <span class="nb">print</span><span class="p">()</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Random Forest
+test set r^2 score = 0.8622
+
+Gradient Boosting
+test set r^2 score = 0.8909
+
+Linear Combination
+test set r^2 score = 0.8826
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># random forest is first coefficient, gradient-boosting is second</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">lr</span><span class="o">.</span><span class="n">coef_</span><span class="p">,</span> <span class="n">lr</span><span class="o">.</span><span class="n">intercept_</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[ 0.68288552  0.35602931] -20861.3317673
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># add in support vector machines as well</span>
+
+<span class="n">svm</span> <span class="o">=</span> <span class="n">SVR</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="s1">&#39;rbf&#39;</span><span class="p">)</span>
+<span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">8</span><span class="p">)}</span>
+
+<span class="n">gridsvm</span> <span class="o">=</span> <span class="n">GridSearchCV</span><span class="p">(</span><span class="n">svm</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">scoring</span><span class="o">=</span><span class="s1">&#39;r2&#39;</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">gridsvm</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Xtrain</span><span class="p">,</span> <span class="n">ytrain</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">gridsvm</span><span class="o">.</span><span class="n">best_params_</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>{&#39;C&#39;: 1000000.0}
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># result with all 3 estimators</span>
+
+<span class="n">lr</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">rf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xtrain</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> 
+                  <span class="n">gbr</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xtrain</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> 
+                  <span class="n">gridsvm</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xtrain</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))),</span> <span class="n">ytrain</span><span class="p">)</span>
+
+<span class="n">Xtest3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">rf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xtest</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> 
+                  <span class="n">gbr</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xtest</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> 
+                  <span class="n">gridsvm</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xtest</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;test set r^2 score = </span><span class="si">{0:.4f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">r2_score</span><span class="p">(</span><span class="n">ytest</span><span class="p">,</span> <span class="n">lr</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xtest3</span><span class="p">))))</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>test set r^2 score = 0.8866
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># random forest is first coefficient, gradient-boosting is second, svm is third</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">lr</span><span class="o">.</span><span class="n">coef_</span><span class="p">,</span> <span class="n">lr</span><span class="o">.</span><span class="n">intercept_</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[ 0.88936674  0.34469522 -0.22120925] -9360.24042484
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[31]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># factor in time dependence</span>
+
+<span class="c1"># first sort values to preserve date order</span>
+<span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;date&#39;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">trainmask</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;date&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">year</span><span class="o">==</span><span class="mi">2014</span>
+<span class="n">testmask</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;date&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">year</span><span class="o">==</span><span class="mi">2015</span>
+
+<span class="n">X</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">ss</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">Xraw</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">Xraw</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+<span class="n">Xtrain</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">trainmask</span><span class="p">]</span>
+<span class="n">Xtest</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">testmask</span><span class="p">]</span>
+<span class="n">ytrain</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">trainmask</span><span class="p">]</span>
+<span class="n">ytest</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">testmask</span><span class="p">]</span>
+
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;timedelta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;date&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">ordinalconv</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;month&#39;</span><span class="p">,))</span>
+
+<span class="n">svm</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="n">C</span><span class="o">=</span><span class="mf">1000000.0</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">name</span><span class="p">,</span><span class="n">est</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><span class="s1">&#39;Random Forest&#39;</span><span class="p">,</span> <span class="s1">&#39;Gradient Boosting&#39;</span><span class="p">,</span> <span class="s1">&#39;SVM&#39;</span><span class="p">,</span> <span class="s1">&#39;Linear Combination&#39;</span><span class="p">],[</span><span class="n">rf</span><span class="p">,</span><span class="n">gbr</span><span class="p">,</span><span class="n">svm</span><span class="p">,</span><span class="n">lr</span><span class="p">]):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">est</span><span class="o">==</span><span class="n">lr</span><span class="p">:</span>
+        <span class="n">est</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">rf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xtrain</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> 
+                           <span class="n">gbr</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xtrain</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> 
+                           <span class="n">gridsvm</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xtrain</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))),</span> <span class="n">ytrain</span><span class="p">)</span>
+        <span class="n">Xtest3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">rf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xtest</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> 
+                           <span class="n">gbr</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xtest</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> 
+                           <span class="n">gridsvm</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xtest</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">est</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Xtrain</span><span class="p">,</span> <span class="n">ytrain</span><span class="p">)</span>
+        <span class="n">Xtest3</span> <span class="o">=</span> <span class="n">Xtest</span>
+    <span class="n">ypred</span> <span class="o">=</span> <span class="n">est</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xtest3</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;test set r^2 score = </span><span class="si">{0:.4f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">r2_score</span><span class="p">(</span><span class="n">ytest</span><span class="p">,</span> <span class="n">ypred</span><span class="p">)))</span>
+    <span class="nb">print</span><span class="p">()</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Random Forest
+test set r^2 score = 0.8585
+
+Gradient Boosting
+test set r^2 score = 0.8704
+
+SVM
+test set r^2 score = 0.7941
+
+Linear Combination
+test set r^2 score = 0.8678
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[32]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># random forest is first coefficient, gradient-boosting is second, svm is third</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">lr</span><span class="o">.</span><span class="n">coef_</span><span class="p">,</span> <span class="n">lr</span><span class="o">.</span><span class="n">intercept_</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area"><div class="prompt"></div>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[ 0.675454    0.46344226 -0.12685742] -7134.28694994
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Result">Result<a class="anchor-link" href="#Result">&#182;</a></h2><p>The combination of a random forest model, gradient boosting trees, and support vector machine did not significantly improve test set performance. This held true for both time-independent and time-dependent models.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <p><a id="concl"></a></p>
 <p><a href="#top">Return to top</a></p>
 <hr>
-<h1 id="Conclusion">Conclusion<a class="anchor-link" href="#Conclusion">&#182;</a></h1><p>The best performing model includes a variety of physical descriptors of the house and lot, descriptions of the location and the actual geographic location (latitude/longitude). Due to the narrow time range, time evolution due to demand or price inflation doesn't seem to have much influence on the predictability of the model.</p>
+<h1 id="Conclusion">Conclusion<a class="anchor-link" href="#Conclusion">&#182;</a></h1><p>The best performing model (Gradient boosting trees with $R^2=0.89$) includes a variety of physical descriptors of the house, lot, and local neighborhood along with the actual geographic location (latitude/longitude). Due to the narrow time range, time evolution due to demand or price inflation doesn't seem to have much influence on the predictability of the model.</p>
 
 </div>
 </div>
