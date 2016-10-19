@@ -8,7 +8,7 @@
 metastore_db/
 
 # pickled files
-*.pkl
+# *.pkl
 
 # log files
 *.log
